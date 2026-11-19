@@ -68,12 +68,18 @@ if [ -n "$ANDROID_SIGNING_KEY" ]; then
 		# Sign the debug APK only when it was built.
 		if [ -f debug/app-$v-arm64-v8a-debug.apk ]; then
 			"$apksigner" sign --ks "${ANDROID_SIGNING_KEY}" \
+				--ks-key-alias "${ANDROID_SIGNING_ALIAS}" \
+				--ks-pass env:ANDROID_SIGNING_STORE_PASSWORD \
+				--key-pass env:ANDROID_SIGNING_KEY_PASSWORD \
 				--in debug/app-$v-arm64-v8a-debug.apk --out debug/app-$v-arm64-v8a-debug-signed.apk
 		fi
 		# but all of the release APKs
 		for apk in release/*-unsigned.apk; do
 			"$apksigner" sign --ks "${ANDROID_SIGNING_KEY}" \
-				--in $apk --out ${apk/-unsigned/-signed}
+				--ks-key-alias "${ANDROID_SIGNING_ALIAS}" \
+				--ks-pass env:ANDROID_SIGNING_STORE_PASSWORD \
+				--key-pass env:ANDROID_SIGNING_KEY_PASSWORD \
+				--in "$apk" --out "${apk/-unsigned/-signed}"
 		done
 		popd
 	done
@@ -85,8 +91,10 @@ if [ -n "$ANDROID_SIGNING_KEY" ]; then
 			exit 1
 		fi
 		pushd defaultRelease
-		jarsigner -keystore "${ANDROID_SIGNING_KEY}" -signedjar \
-			app-default-release-signed.aab app-default-release.aab \
+		jarsigner -keystore "${ANDROID_SIGNING_KEY}" \
+			-storepass:env ANDROID_SIGNING_STORE_PASSWORD \
+			-keypass:env ANDROID_SIGNING_KEY_PASSWORD \
+			-signedjar app-default-release-signed.aab app-default-release.aab \
 			"${ANDROID_SIGNING_ALIAS}"
 		popd
 	fi
