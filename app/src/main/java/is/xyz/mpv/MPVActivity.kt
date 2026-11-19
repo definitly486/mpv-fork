@@ -64,6 +64,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     private val fadeHandler = Handler(Looper.getMainLooper())
     // for use with stopServiceRunnable
     private val stopServiceHandler = Handler(Looper.getMainLooper())
+    private val positionSaveHandler = Handler(Looper.getMainLooper())
 
     /**
      * DO NOT USE THIS
@@ -161,6 +162,15 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
     private val stopServiceRunnable = Runnable {
         val intent = Intent(this, BackgroundPlaybackService::class.java)
         applicationContext.stopService(intent)
+    }
+
+    // Periodically checkpoint playback position so it survives unexpected process termination.
+    private val positionSaveRunnable = object : Runnable {
+        override fun run() {
+            savePosition()
+            if (!isFinishing)
+                positionSaveHandler.postDelayed(this, POSITION_SAVE_INTERVAL)
+        }
     }
 
     /* Settings */
@@ -305,6 +315,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         player.addObserver(this)
         player.initialize(filesDir.path, cacheDir.path)
         player.playFile(filepath)
+        positionSaveHandler.postDelayed(positionSaveRunnable, POSITION_SAVE_INTERVAL)
 
         mediaSession = initMediaSession()
         updateMediaSession()
@@ -370,6 +381,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
 
         // take the background service with us
         stopServiceRunnable.run()
+        positionSaveHandler.removeCallbacks(positionSaveRunnable)
 
         player.removeObserver(this)
         player.destroy()
@@ -2138,6 +2150,7 @@ class MPVActivity : AppCompatActivity(), MPVLib.EventObserver, TouchGesturesObse
         private const val TAG = "mpv"
         // how long should controls be displayed on screen (ms)
         private const val CONTROLS_DISPLAY_TIMEOUT = 1500L
+        private const val POSITION_SAVE_INTERVAL = 15_000L
         // how long controls fade to disappear (ms)
         private const val CONTROLS_FADE_DURATION = 500L
         // smallest aspect ratio that is considered non-square
