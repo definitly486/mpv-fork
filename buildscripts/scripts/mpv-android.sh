@@ -49,6 +49,8 @@ printf '%s\n' \
 
 if [ -n "$DONT_BUILD_RELEASE" ]; then
 	./gradlew assembleDebug
+elif [ -n "$DONT_BUILD_DEBUG" ]; then
+	./gradlew assembleRelease
 else
 	./gradlew assembleDebug assembleRelease
 	if [ -n "$BUNDLE" ]; then
@@ -63,9 +65,11 @@ if [ -n "$ANDROID_SIGNING_KEY" ]; then
 	apksigner=${ANDROID_HOME}/build-tools/${v_sdk_build_tools}/apksigner
 	for v in default allstorage; do
 		pushd $v
-		# Sign the ARM64 debug APK (universal APKs are disabled).
-		"$apksigner" sign --ks "${ANDROID_SIGNING_KEY}" \
-			--in debug/app-$v-arm64-v8a-debug.apk --out debug/app-$v-arm64-v8a-debug-signed.apk
+		# Sign the debug APK only when it was built.
+		if [ -f debug/app-$v-arm64-v8a-debug.apk ]; then
+			"$apksigner" sign --ks "${ANDROID_SIGNING_KEY}" \
+				--in debug/app-$v-arm64-v8a-debug.apk --out debug/app-$v-arm64-v8a-debug-signed.apk
+		fi
 		# but all of the release APKs
 		for apk in release/*-unsigned.apk; do
 			"$apksigner" sign --ks "${ANDROID_SIGNING_KEY}" \
