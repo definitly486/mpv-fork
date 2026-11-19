@@ -26,8 +26,24 @@ jobs:
 
       - name: Install packages
         run: |
-          sudo apt-get update
-          sudo apt-get install autoconf pkgconf libtool ninja-build python3-pip gperf nasm
+          set -e
+
+          apt_retry() {
+            local attempt=1
+            local max_attempts=3
+            until "$@"; do
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "APT command failed after $max_attempts attempts: $*"
+                return 1
+              fi
+              echo "APT command failed (attempt $attempt/$max_attempts); retrying in 15 seconds..."
+              sleep 15
+              attempt=$((attempt + 1))
+            done
+          }
+
+          apt_retry sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 update
+          apt_retry sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 install -y autoconf pkgconf libtool ninja-build python3-pip gperf nasm
           sudo pip3 install meson
 
       - name: Download or build deps
