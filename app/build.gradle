@@ -41,6 +41,14 @@ android {
         buildConfig = true
     }
 
+    // Compress native .so files inside the APK to reduce the downloadable APK size.
+    // Android extracts them during installation.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled = true
