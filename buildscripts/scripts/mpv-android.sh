@@ -63,9 +63,9 @@ if [ -n "$ANDROID_SIGNING_KEY" ]; then
 	apksigner=${ANDROID_HOME}/build-tools/${v_sdk_build_tools}/apksigner
 	for v in default allstorage; do
 		pushd $v
-		# sign only the universal debug APK
+		# Sign the ARM64 debug APK (universal APKs are disabled).
 		"$apksigner" sign --ks "${ANDROID_SIGNING_KEY}" \
-			--in debug/app-$v-universal-debug.apk --out debug/app-$v-universal-debug-signed.apk
+			--in debug/app-$v-arm64-v8a-debug.apk --out debug/app-$v-arm64-v8a-debug-signed.apk
 		# but all of the release APKs
 		for apk in release/*-unsigned.apk; do
 			"$apksigner" sign --ks "${ANDROID_SIGNING_KEY}" \
