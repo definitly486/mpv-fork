@@ -83,9 +83,10 @@ if [ -n "$ANDROID_SIGNING_KEY" ]; then
 		done
 		popd
 	done
-	# and the bundle
-	cd ../bundle
-	if [ -n "$BUNDLE" ]; then
+	# Sign the bundle only when bundleRelease was built.
+	# Release-only APK builds do not create app/build/outputs/bundle.
+	if [ -n "$BUNDLE" ] && [ -d ../bundle/defaultRelease ]; then
+		cd ../bundle
 		if [ -z "$ANDROID_SIGNING_ALIAS" ]; then
 			echo >&2 "Error: ANDROID_SIGNING_ALIAS must be set to use jarsigner"
 			exit 1
